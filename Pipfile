@@ -6,9 +6,9 @@ name = "pypi"
 [packages]
 tensorflow = "*"
 pprint = "*"
-untangle = "*"
-xmltodict = "*"
 "partial.py" = "*"
+sklearn = "*"
+scipy = "*"
 
 [dev-packages]
 pylint = "*"
