@@ -1,4 +1,4 @@
-import pprint
+from pprint import PrettyPrinter
 from glob import glob
 from xml.etree.ElementTree import parse
 import tensorflow as tf
@@ -9,7 +9,7 @@ import numpy as np
 from operator import itemgetter
 from sklearn.preprocessing import LabelEncoder
 
-pp = pprint.PrettyPrinter().pprint
+pp = PrettyPrinter().pprint
 le = LabelEncoder()
 
 config = Config()
@@ -28,11 +28,10 @@ bytesFeature = lambda x: tf.train.Feature(bytes_list=x)
 int64Feature = lambda x: tf.train.Feature(int64_list=x)
 resizeImage = lambda x: tf.image.resize_images(x, [config.crop_size, config.crop_size], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
-def zipTwo(x):
+def saveLabels(x):
 		global labels
 		labels = x[1::2]
 		return x[::2]
-
 
 
 def _cropImage(r, *s):
@@ -48,10 +47,8 @@ def _cropImage(r, *s):
 def cropImage(r, *s):
 		origin = parse(r[1]).getroot()
 		boxes = origin.findall('object')
-		w = int(origin.find('size').find('width').text)
-		h = int(origin.find('size').find('height').text)
 		return _.go(
-					_.zip(boxes, [[r[0], h, w] for i in range(len(boxes))]),
+					_.zip(boxes, [r[0] for i in range(len(boxes))]),
 					_.map(_cropImage),
 					_.flatten
 					)
@@ -78,7 +75,7 @@ image_features = _.go(
 		_.map(f(tf.read_file)),
 		_.map(f(tf.image.decode_jpeg)),
 		cropImages,
-		zipTwo,
+		saveLabels,
 		_.tap(pp),
 		_.map(f(resizeImage)),
 		_.tap(pp),
@@ -111,11 +108,6 @@ label_features = _.go(
 		_.map(f(bytesFeature)),
 		_.tap(pp),
 )
-
-pp(image_features)
-pp(label_features)
-pp(len(image_features))
-pp(len(label_features))
 
 writer = tf.python_io.TFRecordWriter(config.record_filename)
 
