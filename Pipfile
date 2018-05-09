@@ -1,5 +1,5 @@
 [[source]]
-url = "https://pypi.org/simple"
+url = "http://ftp.daumkakao.com/pypi/simple"
 verify_ssl = true
 name = "pypi"
 
