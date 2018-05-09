@@ -1,5 +1,7 @@
 .vscode
 .ide
-data
+data/Annotation
+data/Images
 .DS_Store
 .mypy_cache
+*.tfrecords
