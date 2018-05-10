@@ -131,22 +131,19 @@ writeFeatures = lambda writer: _.pipe(
 
 def writeExample(process):
 		def write(*x):
-				import tensorflow as tf
 				data = _.unzip(x[0])
 				sess = tf.InteractiveSession()
 				filename = f'data/Records/data-{process}-{x[1]}.tfrecords'
 				writer = tf.python_io.TFRecordWriter(filename)
 				image_features = imageToFeature(sess)(data[0])
-				pp('why!!!!!!!!!!!!!111111')
 				label_features = labelToFeature(sess)(data[1])
-				pp('why!!!!!!!!!!!!22222222222')
 				writeFeatures(writer)(_.zip(image_features, label_features))
-				pp('why!!!!!!!!!!!!!333333333333')
 				writer.close()
 				sess.close()
 		return write
 
 def writeExamples(*x):
+		import tensorflow as tf
 		_.go(
 			x[0],
 			_.map(writeExample(x[1])),
@@ -155,7 +152,6 @@ def writeExamples(*x):
 makeProcess = lambda *x: Process(target=writeExamples, args=(x))
 
 group = lambda n: lambda l: ([e for e in t if e != None] for t in itertools.zip_longest(*([iter(l)] * n)))
-# chunk = lambda l, n: [l[i::n] for i in range(n)]
 
 def chunk(seq, num):
     avg = len(seq) / float(num)
@@ -166,13 +162,7 @@ def chunk(seq, num):
         last += avg
     return out
 
-# pp(len(croppedImages))
-# pp(len(split(croppedImages, config.split)))
-# pp(len(_.range(0, len(croppedImages), config.split)))
-# pp(len(chunk(split(croppedImages, config.split), cores)))
-
 labels['val'] = le.fit_transform(labels['val'])
-# pp(len(labels['val']))
 
 _.go(
 		chunk(split(_.zip(croppedImages, labels['val']), config.split), cores), #_.range(cores)),
