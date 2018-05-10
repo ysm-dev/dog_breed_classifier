@@ -89,7 +89,7 @@ images = _.go(
 		images,
 		# _.take(test_size),
 		# _.take(config.split),
-		_.shuffle,
+		# _.shuffle,
 		_.map(readFile),
 		_.map(decodeJpeg),
 )
