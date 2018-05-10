@@ -74,19 +74,19 @@ def cropImages(annots):
 															_.flatten
 															)
 
-
+test_size = 2048
 images = sorted(glob('data/Images/*/*'))
 # labels = _.map(images, lambda x, *r: x.split('/')[2])
 labels: dict = dict()
 # le.fit(labels)
 class_num = len(glob('data/Images/*'))
 annots = sorted(glob('data/Annotation/*/*'))
-# annots = _.take(annots, 1024)
+annots = _.take(annots, test_size)
 
 
 images = _.go(
 		images,
-		# _.take(1024),
+		_.take(test_size),
 		# _.take(config.split),
 		# _.shuffle,
 		_.map(readFile),
