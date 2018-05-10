@@ -82,14 +82,14 @@ labels: dict = dict()
 # le.fit(labels)
 class_num = len(glob('data/Images/*'))
 annots = sorted(glob('data/Annotation/*/*'))
-annots = _.take(annots, test_size)
+# annots = _.take(annots, test_size)
 
 
 images = _.go(
 		images,
-		_.take(test_size),
+		# _.take(test_size),
 		# _.take(config.split),
-		# _.shuffle,
+		_.shuffle,
 		_.map(readFile),
 		_.map(decodeJpeg),
 )
