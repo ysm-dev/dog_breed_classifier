@@ -18,7 +18,7 @@ pp = PrettyPrinter().pprint
 le = LabelEncoder()
 # tf.executing_eagerly()
 config = Config()
-# sess = tf.InteractiveSession()
+sess = tf.InteractiveSession()
 # graph = tf.Graph()
 # sess = tf.Session(graph=tf.Graph())
 # sess.run(tf.global_variables_initializer())
@@ -84,6 +84,7 @@ class_num = len(glob('data/Images/*'))
 annots = sorted(glob('data/Annotation/*/*'))
 # annots = _.take(annots, test_size)
 
+pp('Load data...')
 
 images = _.go(
 		images,
@@ -93,6 +94,8 @@ images = _.go(
 		_.map(readFile),
 		_.map(decodeJpeg),
 )
+
+pp('Cropping all data...')
 
 croppedImages = _.go(
 		images,
@@ -133,14 +136,14 @@ writeFeatures = lambda writer: _.pipe(
 def writeExample(process):
 		def write(*x):
 				data = _.unzip(x[0])
-				sess = tf.InteractiveSession()
+				# sess = tf.InteractiveSession()
 				filename = f'data/Records/data-{process}-{x[1]}.tfrecords'
 				writer = tf.python_io.TFRecordWriter(filename)
 				image_features = imageToFeature(sess)(data[0])
 				label_features = labelToFeature(sess)(data[1])
 				writeFeatures(writer)(_.zip(image_features, label_features))
 				writer.close()
-				sess.close()
+				# sess.close()
 		return write
 
 def writeExamples(*x):
