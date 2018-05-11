@@ -1,5 +1,5 @@
 class Config():
-		split = 128
+		split = 16
 		
 		train_ratio = 0.8
 

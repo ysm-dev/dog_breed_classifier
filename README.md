@@ -17,7 +17,7 @@ $ sh data/download_data.sh
 
 Install dependencies.
 
-Install [`Pipenv`](https://docs.pipenv.org) first, if you didn't installed it.
+Install [Pipenv](https://docs.pipenv.org) first, if you didn't installed it.
 
 ## MacOS
 

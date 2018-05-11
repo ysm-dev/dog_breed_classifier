@@ -21,14 +21,14 @@ config = Config()
 sess = tf.InteractiveSession()
 # graph = tf.Graph()
 # sess = tf.Session(graph=tf.Graph())
-# sess.run(tf.global_variables_initializer())
+sess.run(tf.global_variables_initializer())
 # f = lambda g: lambda *p: g(p[0])
 readFile = lambda *x: tf.read_file(x[0])
 decodeJpeg = lambda *x: tf.image.decode_jpeg(x[0])
 rgbToGrayscale = lambda *x: tf.image.rgb_to_grayscale(x[0])
 toInt8 = lambda *x: tf.cast(x[0], tf.uint8)
 toFloat16 = lambda *x: tf.cast(x[0], tf.float16)
-tobytes = lambda s: lambda *x: s.run(x[0]).tobytes()
+tobytes = lambda *x: sess.run(x[0]).tobytes()
 bytesList = lambda *x: tf.train.BytesList(value=[x[0]])
 int64List = lambda *x: tf.train.Int64List(value=[x[0]])
 bytesFeature = lambda *x: tf.train.Feature(bytes_list=x[0])
@@ -82,13 +82,13 @@ labels: dict = dict()
 # le.fit(labels)
 class_num = len(glob('data/Images/*'))
 annots = sorted(glob('data/Annotation/*/*'))
-# annots = _.take(annots, test_size)
+annots = _.take(annots, test_size)
 
 pp('Load data...')
 
 images = _.go(
 		images,
-		# _.take(test_size),
+		_.take(test_size),
 		# _.take(config.split),
 		# _.shuffle,
 		_.map(readFile),
@@ -103,51 +103,85 @@ croppedImages = _.go(
 		saveLabels(labels),
 )
 
-imageToFeature = lambda s: _.pipe(
+imageToFeature = _.pipe(
+		_.tap(pp),
 		_.map(rgbToGrayscale),
+		_.tap(pp),
 		_.map(resizeImage),
+		_.tap(pp),
 		_.map(toInt8),
-		_.map(tobytes(s)),
+		_.tap(pp),
+		_.map(tobytes),
+		_.tap(pp),
 		_.map(bytesList),
+		_.tap(pp),
 		_.map(bytesFeature),
+		_.tap(pp),
 )
 
-labelToFeature = lambda s: _.pipe(
+labelToFeature = _.pipe(
 		# _.values,
 		# _.first,
 		# le.fit_transform,
 		# list,
 		_.map(oneHot(class_num)),
+		_.tap(pp),
 		_.map(toInt8),
-		_.map(tobytes(s)),
+		_.map(tobytes),
 		_.map(bytesList),
 		_.map(bytesFeature),
+		_.tap(pp),
 )
 
+labels['val'] = le.fit_transform(labels['val'])
+filename = lambda x: f'data/Records/data-{x}.tfrecords'
+i = {'val': 0, 'file': ''}
+
+def file(*p):
+		if i['val'] % config.split == 0:
+				i['file'] = tf.python_io.TFRecordWriter(filename(i['val']))
+		i['val'] += 1
+
+
 writeFeatures = lambda writer: _.pipe(
-		_.map(lambda *r: {'image': r[0][0], 'label': r[0][1]}),
-		_.tap(pp),
+		# _.map(lambda *r: {'image': imageToFeature(r[0][0]), 'label': labelToFeature(r[0][1])}),
+		# _.tap(pp),
 		_.map(features),
 		_.map(example),
 		_.map(serializeToString),
 		_.map(write(writer)),
+		_.tap(file),
 )
+
+_.go(
+		# _.range(0, len(croppedImages), config.split),
+		_.zip(croppedImages, labels['val']),
+		# _.map(lambda *x: _.unzip(x[0])),
+		_.tap(pp),
+		_.map(lambda *x: pp(x)), #[imageToFeature(x[0]), labelToFeature(x[1])]),
+		_.tap(pp),
+		_.map(lambda *x: {'image': x[0], 'label': x[1]}),
+		_.map(writeFeatures(i['file'])),
+)
+
+
 
 def writeExample(process):
 		def write(*x):
+				pp('Write File..')
 				data = _.unzip(x[0])
 				# sess = tf.InteractiveSession()
 				filename = f'data/Records/data-{process}-{x[1]}.tfrecords'
 				writer = tf.python_io.TFRecordWriter(filename)
-				image_features = imageToFeature(sess)(data[0])
-				label_features = labelToFeature(sess)(data[1])
+				image_features = imageToFeature(data[0])
+				label_features = labelToFeature(data[1])
 				writeFeatures(writer)(_.zip(image_features, label_features))
 				writer.close()
-				# sess.close()
+				sess.close()
 		return write
 
 def writeExamples(*x):
-		import tensorflow as tf
+		# import tensorflow as tf
 		_.go(
 			x[0],
 			_.map(writeExample(x[1])),
@@ -166,11 +200,13 @@ def chunk(seq, num):
         last += avg
     return out
 
-labels['val'] = le.fit_transform(labels['val'])
+# pp('Data to TFRecords...')
 
-_.go(
-		chunk(split(_.zip(croppedImages, labels['val']), config.split), cores), #_.range(cores)),
-		_.map(makeProcess),
-		_.tap(_.map(lambda *x: x[0].start())),
-		_.tap(_.map(lambda *x: x[0].join())),
-)
+# _.go(
+# 		chunk(split(_.zip(croppedImages, labels['val']), config.split), cores), #_.range(cores)),
+# 		_.map(makeProcess),
+# 		_.tap(_.map(lambda *x: x[0].start())),
+# 		_.tap(_.map(lambda *x: x[0].join())),
+# )
+
+pp('Finish!')
