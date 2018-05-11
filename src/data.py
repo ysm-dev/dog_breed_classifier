@@ -75,7 +75,7 @@ def cropImages(annots):
 															_.flatten
 															)
 
-test_size = 512
+test_size = 1024
 images = sorted(glob('data/Images/*/*'))
 # labels = _.map(images, lambda x, *r: x.split('/')[2])
 labels: dict = dict()
@@ -104,19 +104,19 @@ croppedImages = _.go(
 )
 
 imageToFeature = _.pipe(
-		_.tap(pp),
+		# _.tap(pp),
 		_.map(rgbToGrayscale),
 		_.tap(pp),
 		_.map(resizeImage),
-		_.tap(pp),
+		# _.tap(pp),
 		_.map(toInt8),
-		_.tap(pp),
+		# _.tap(pp),
 		_.map(tobytes),
-		_.tap(pp),
+		# _.tap(pp),
 		_.map(bytesList),
-		_.tap(pp),
+		# _.tap(pp),
 		_.map(bytesFeature),
-		_.tap(pp),
+		# _.tap(pp),
 )
 
 labelToFeature = _.pipe(
@@ -125,16 +125,16 @@ labelToFeature = _.pipe(
 		# le.fit_transform,
 		# list,
 		_.map(oneHot(class_num)),
-		_.tap(pp),
+		# _.tap(pp),
 		_.map(toInt8),
 		_.map(tobytes),
 		_.map(bytesList),
 		_.map(bytesFeature),
-		_.tap(pp),
+		# _.tap(pp),
 )
 
 labels['val'] = le.fit_transform(labels['val'])
-filename = lambda x: f'data/Records/data-{x}.tfrecords'
+filename = lambda x, *r: f'data/Records/data-{x}.tfrecords'
 i = {'val': 0, 'file': ''}
 
 def file(*p):
@@ -143,26 +143,46 @@ def file(*p):
 		i['val'] += 1
 
 
-writeFeatures = lambda writer: _.pipe(
-		# _.map(lambda *r: {'image': imageToFeature(r[0][0]), 'label': labelToFeature(r[0][1])}),
-		# _.tap(pp),
-		_.map(features),
-		_.map(example),
-		_.map(serializeToString),
-		_.map(write(writer)),
-		_.tap(file),
+featureToSerialize = _.pipe(
+		_.tap(pp),
+		lambda *x: {'image': x[0][0], 'label': x[0][1]},
+		features,
+		example,
+		serializeToString,
+		# _.map(write(writer)),
+		# _.tap(file),
 )
 
-_.go(
+features = _.go(
 		# _.range(0, len(croppedImages), config.split),
-		_.zip(croppedImages, labels['val']),
+		split(_.zip(croppedImages, labels['val']), config.split),
 		# _.map(lambda *x: _.unzip(x[0])),
-		_.tap(pp),
-		_.map(lambda *x: pp(x)), #[imageToFeature(x[0]), labelToFeature(x[1])]),
-		_.tap(pp),
-		_.map(lambda *x: {'image': x[0], 'label': x[1]}),
-		_.map(writeFeatures(i['file'])),
+		# _.tap(pp),
+		_.map(lambda *x: _.unzip(x[0])),
+		_.map(lambda *x: [imageToFeature(x[0][0]), labelToFeature(x[0][1])]),
+		# _.tap(pp),
+		# _.map(lambda *x: {'image': x[0][0], 'label': x[0][1]}),
+		# _.map(writeFeatures(i['file'])),
 )
+
+writers = _.go(
+		_.range(_.size(features)),
+		_.map(filename),
+		_.map(lambda x, *r: tf.python_io.TFRecordWriter(x)),
+)
+
+def writing(*x):
+
+		_.map(x[0][1], lambda feature, *r: x[0][0].write(featureToSerialize(feature)))
+		x[0][0].close()
+		# _.map(writer. lambda wtierclose()
+
+_.go(
+		_.zip(writers, features),
+		_.tap(pp),
+		_.map(writing),
+)
+
 
 
 
