@@ -82,13 +82,13 @@ labels: dict = dict()
 # le.fit(labels)
 class_num = len(glob('data/Images/*'))
 annots = sorted(glob('data/Annotation/*/*'))
-annots = _.take(annots, test_size)
+# annots = _.take(annots, test_size)
 
 pp('Load data...')
 
 images = _.go(
 		images,
-		_.take(test_size),
+		# _.take(test_size),
 		# _.take(config.split),
 		# _.shuffle,
 		_.map(readFile),
@@ -186,39 +186,39 @@ _.go(
 
 
 
-def writeExample(process):
-		def write(*x):
-				pp('Write File..')
-				data = _.unzip(x[0])
-				# sess = tf.InteractiveSession()
-				filename = f'data/Records/data-{process}-{x[1]}.tfrecords'
-				writer = tf.python_io.TFRecordWriter(filename)
-				image_features = imageToFeature(data[0])
-				label_features = labelToFeature(data[1])
-				writeFeatures(writer)(_.zip(image_features, label_features))
-				writer.close()
-				sess.close()
-		return write
+# def writeExample(process):
+# 		def write(*x):
+# 				pp('Write File..')
+# 				data = _.unzip(x[0])
+# 				# sess = tf.InteractiveSession()
+# 				filename = f'data/Records/data-{process}-{x[1]}.tfrecords'
+# 				writer = tf.python_io.TFRecordWriter(filename)
+# 				image_features = imageToFeature(data[0])
+# 				label_features = labelToFeature(data[1])
+# 				writeFeatures(writer)(_.zip(image_features, label_features))
+# 				writer.close()
+# 				sess.close()
+# 		return write
 
-def writeExamples(*x):
-		# import tensorflow as tf
-		_.go(
-			x[0],
-			_.map(writeExample(x[1])),
-		)
+# def writeExamples(*x):
+# 		# import tensorflow as tf
+# 		_.go(
+# 			x[0],
+# 			_.map(writeExample(x[1])),
+# 		)
 
-makeProcess = lambda *x: Process(target=writeExamples, args=(x))
+# makeProcess = lambda *x: Process(target=writeExamples, args=(x))
 
-group = lambda n: lambda l: ([e for e in t if e != None] for t in itertools.zip_longest(*([iter(l)] * n)))
+# group = lambda n: lambda l: ([e for e in t if e != None] for t in itertools.zip_longest(*([iter(l)] * n)))
 
-def chunk(seq, num):
-    avg = len(seq) / float(num)
-    out = []
-    last = 0.0
-    while last < len(seq):
-        out.append(seq[int(last):int(last + avg)])
-        last += avg
-    return out
+# def chunk(seq, num):
+#     avg = len(seq) / float(num)
+#     out = []
+#     last = 0.0
+#     while last < len(seq):
+#         out.append(seq[int(last):int(last + avg)])
+#         last += avg
+#     return out
 
 # pp('Data to TFRecords...')
 
